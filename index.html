@@ -1,0 +1,3165 @@
+Listed directory scratch
+Ran command: `mkdir -p "C:\Users\ASUS\.gemini\antigravity\scratch\bank-vocabulary"`
+Created C:\Users\ASUS\.gemini\antigravity\scratch\bank-vocabulary\index.html
+Created index.html
+Viewed index.html:1-100
+Viewed index.html:1050-1150
+Viewed index.html:3100-3142
+Viewed index.html:950-1050
+Viewed index.html:500-600
+Searched for "<!DOCTYPE html>"
+Created index.html
+Viewed index.html:1-100
+Viewed index.html:1000-1100
+Viewed index.html:1300-1400
+Ran command: `powershell -Command "Get-Content 'C:\Users\ASUS\.gemini\antigravity\scratch\bank-vocabulary\index.html' | Measure-Object -Line"`
+Ran command: `powershell -Command "Select-String -Path 'C:\Users\ASUS\.gemini\antigravity\scratch\bank-vocabulary\index.html' -Pattern '<!DOCTYPE html>' | Select-Object LineNumber, Line"`
+Ran command: `powershell -Command "Select-String -Path 'C:\Users\ASUS\.gemini\antigravity\scratch\bank-vocabulary\index.html' -Pattern '</html>' | Select-Object LineNumber, Line"`
+Ran command: `powershell -Command "Select-String -Path 'C:\Users\ASUS\.gemini\antigravity\scratch\bank-vocabulary\index.html' -Pattern '<style|<script' | Select-Object LineNumber, Line"`
+
+Berikut adalah aplikasi web **Bank Vocabulary** yang telah selesai dibuat dalam **satu file HTML lengkap (HTML + CSS + JavaScript)**.
+
+Aplikasi ini sudah siap langsung kamu gunakan, dibuka di browser laptop/Android, ataupun di-deploy langsung ke **GitHub & Vercel**.
+
+---
+
+### 🌟 Ringkasan Fitur yang Diimplementasikan:
+1. **Dukungan Dua Bahasa**: Bahasa Inggris 🇬🇧 dan Bahasa Arab 🇸🇦 (dilengkapi dengan tipografi font *Amiri*, format *Right-to-Left (RTL)*, dan tanda harakat/tashkeel).
+2. **Audio Pengucapan (Pronunciation)**: Menggunakan Web Speech Synthesis bawaan browser untuk melafalkan kata bahasa Inggris dan bahasa Arab.
+3. **Penyimpanan Aman (LocalStorage)**:
+   - **Tidak pernah menggunakan `localStorage.clear()`**.
+   - Dilengkapi strategi *migration & backward compatibility* agar data kata yang sudah tersimpan **tidak akan hilang** saat kode diperbarui atau di-deploy ulang di Vercel.
+4. **Dashboard Modern**: Statistik Total Vocab, English, Arabic, Today's Review, Mastered, serta *Quick Practice shortcuts*.
+5. **Manajemen Vocabulary (CRUD)**:
+   - **+ Add Vocabulary**: Form modern dengan tombol *⚡ Generate Example* (offline tanpa perlu AI API eksternal).
+   - **Edit Vocabulary**: Memuat data lama untuk diubah dan disimpan seketika.
+   - **Delete Vocabulary**: Tombol hapus bekerja secara terisolasi dengan modal konfirmasi aman tanpa menghapus data lain.
+6. **Pencarian & Filter Real-Time**: Pencarian kata/arti secara instan dan filter (*All, English, Arabic, Needs Review, Mastered*).
+7. **Interactive Quiz**:
+   - Otomatis memasukkan setiap vocabulary baru yang ditambahkan ke dalam quiz tanpa reload.
+   - 4 tipe pertanyaan (EN &rarr; ID, ID &rarr; EN, AR &rarr; ID, ID &rarr; AR).
+   - Penilaian skor, akurasi, dan update otomatis status *Mastery*.
+8. **Flashcards**: Kartu interaktif 3D flip dengan tombol *I Know This* (+mastery) dan *Need Review* (-mastery).
+9. **Today's Spaced Review**: Antrean kata yang perlu diulang (mastery &lt; 70%) dengan tombol *✓ Remembered* dan *↻ Review Again*.
+10. **Create a Sentence (Sentence Builder)**:
+    - Pilih beberapa kata menggunakan checkbox.
+    - Tombol *✨ Generate Sentence* yang merangkai kalimat alami (English / Arabic RTL) beserta terjemahan bahasa Indonesianya.
+    - Tombol *Save Sentence* untuk menyimpan kalimat ke daftar *Saved Sentences*.
+11. **Saved Sentences**: Halaman khusus untuk melihat, menyalin, dan mengelola kalimat yang pernah kamu buat.
+12. **Backup & Restore (Export / Import JSON)**: Ekspor seluruh data ke file JSON dan impor data dengan fitur **Merge** aman.
+13. **Dark & Light Mode**: Desain modern SaaS dengan tema yang tersimpan di localStorage.
+14. **Responsif Desktop & Android Mobile**: Dilengkapi navigasi samping untuk desktop dan *bottom navigation bar* untuk perangkat layar sentuh / smartphone.
+
+---
+
+### 📄 Kode Lengkap `index.html`:
+
+File ini tersimpan di:
+[`index.html`](file:///C:/Users/ASUS/.gemini/antigravity/scratch/bank-vocabulary/index.html)
+
+```html
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Bank Vocabulary - English & Arabic Learning System</title>
+  <meta name="description" content="Aplikasi pribadi untuk menyimpan, mempelajari, mengulang, dan menguji vocabulary bahasa Inggris dan bahasa Arab." />
+  <meta name="theme-color" content="#0B0F19" />
+
+  <!-- Google Fonts: Plus Jakarta Sans & Amiri for Arabic -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ==========================================
+       CSS VARIABLES & THEME SYSTEM
+       ========================================== */
+    :root {
+      --primary: #6366F1;
+      --primary-hover: #4F46E5;
+      --primary-light: rgba(99, 102, 241, 0.12);
+      --primary-glow: rgba(99, 102, 241, 0.25);
+      
+      --arabic-accent: #0D9488;
+      --arabic-light: rgba(13, 148, 136, 0.12);
+      --english-accent: #3B82F6;
+      --english-light: rgba(59, 130, 246, 0.12);
+
+      --success: #10B981;
+      --success-light: rgba(16, 185, 129, 0.12);
+      --warning: #F59E0B;
+      --warning-light: rgba(245, 158, 11, 0.12);
+      --danger: #EF4444;
+      --danger-light: rgba(239, 68, 68, 0.12);
+
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-xl: 26px;
+      --radius-full: 9999px;
+
+      --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-arabic: 'Amiri', 'Traditional Arabic', serif;
+      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* DARK THEME (Default) */
+    [data-theme="dark"] {
+      --bg-body: #090D16;
+      --bg-sidebar: #0F1626;
+      --bg-card: #131D31;
+      --bg-card-hover: #18243D;
+      --bg-surface: #1B2640;
+      --bg-surface-soft: #233150;
+      
+      --text-main: #F8FAFC;
+      --text-muted: #94A3B8;
+      --text-dim: #64748B;
+      
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-color-hover: rgba(255, 255, 255, 0.16);
+      
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6);
+      
+      --nav-active-bg: rgba(99, 102, 241, 0.15);
+      --nav-active-color: #818CF8;
+      --card-gradient: linear-gradient(145deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 100%);
+    }
+
+    /* LIGHT THEME */
+    [data-theme="light"] {
+      --bg-body: #F8FAFC;
+      --bg-sidebar: #FFFFFF;
+      --bg-card: #FFFFFF;
+      --bg-card-hover: #F8FAFC;
+      --bg-surface: #F1F5F9;
+      --bg-surface-soft: #E2E8F0;
+      
+      --text-main: #0F172A;
+      --text-muted: #64748B;
+      --text-dim: #94A3B8;
+      
+      --border-color: #E2E8F0;
+      --border-color-hover: #CBD5E1;
+      
+      --shadow-sm: 0 2px 6px rgba(15, 23, 42, 0.04);
+      --shadow-md: 0 8px 20px rgba(15, 23, 42, 0.06);
+      --shadow-lg: 0 16px 36px rgba(15, 23, 42, 0.08);
+      
+      --nav-active-bg: #EEF2FF;
+      --nav-active-color: #4F46E5;
+      --card-gradient: linear-gradient(145deg, #FFFFFF 0%, #FAFAFC 100%);
+    }
+
+    /* ==========================================
+       RESET & BASE STYLES
+       ========================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: var(--font-main);
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      line-height: 1.5;
+      overflow-x: hidden;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    button, input, select, textarea {
+      font-family: inherit;
+      color: inherit;
+      outline: none;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      background: none;
+      user-select: none;
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .arabic-text {
+      font-family: var(--font-arabic);
+      direction: rtl;
+      text-align: right;
+      line-height: 1.8;
+      font-size: 1.35rem;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: var(--radius-full);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-dim);
+    }
+
+    /* ==========================================
+       APP LAYOUT
+       ========================================== */
+    .app-container {
+      display: flex;
+      min-height: 100vh;
+      width: 100%;
+    }
+
+    /* Sidebar (Desktop) */
+    .sidebar {
+      width: 270px;
+      background-color: var(--bg-sidebar);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 40;
+      transition: var(--transition);
+    }
+
+    .brand-section {
+      padding: 24px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      font-size: 1.15rem;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--primary) 0%, #8B5CF6 100%);
+      color: #FFF;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px var(--primary-glow);
+    }
+
+    .nav-list {
+      list-style: none;
+      padding: 16px 12px;
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .nav-item button {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 16px;
+      border-radius: var(--radius-md);
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      transition: var(--transition);
+      text-align: left;
+    }
+
+    .nav-item button:hover {
+      background-color: var(--bg-surface);
+      color: var(--text-main);
+    }
+
+    .nav-item button.active {
+      background-color: var(--nav-active-bg);
+      color: var(--nav-active-color);
+      box-shadow: inset 3px 0 0 var(--primary);
+    }
+
+    .nav-badge {
+      margin-left: auto;
+      background-color: var(--primary-light);
+      color: var(--primary);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+    }
+
+    .sidebar-footer {
+      padding: 16px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    /* Main Content Area */
+    .main-wrapper {
+      flex: 1;
+      margin-left: 270px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      background-color: var(--bg-body);
+      transition: var(--transition);
+    }
+
+    /* Header Bar */
+    .topbar {
+      height: 70px;
+      padding: 0 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-color);
+      background-color: var(--bg-sidebar);
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      backdrop-filter: blur(12px);
+    }
+
+    .topbar-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .content-area {
+      padding: 28px;
+      flex: 1;
+      max-width: 1280px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* Mobile Bottom Navigation */
+    .bottom-nav {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      background-color: var(--bg-sidebar);
+      border-top: 1px solid var(--border-color);
+      z-index: 50;
+      padding: 0 8px;
+      box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(16px);
+    }
+
+    .bottom-nav-list {
+      display: flex;
+      height: 100%;
+      justify-content: space-around;
+      align-items: center;
+      list-style: none;
+    }
+
+    .bottom-nav-item button {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      padding: 6px 10px;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      transition: var(--transition);
+    }
+
+    .bottom-nav-item button.active {
+      color: var(--primary);
+    }
+
+    .bottom-nav-item svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* ==========================================
+       BUTTONS & INPUTS
+       ========================================== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 18px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: var(--radius-md);
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary) 0%, #4F46E5 100%);
+      color: #FFFFFF;
+      box-shadow: 0 4px 14px var(--primary-glow);
+    }
+
+    .btn-primary:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px var(--primary-glow);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background-color: var(--bg-surface);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--bg-surface-soft);
+      border-color: var(--border-color-hover);
+    }
+
+    .btn-icon {
+      padding: 8px;
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-md);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      transition: var(--transition);
+    }
+
+    .btn-icon:hover {
+      background-color: var(--bg-surface-soft);
+      border-color: var(--border-color-hover);
+      color: var(--primary);
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      border-radius: var(--radius-sm);
+    }
+
+    .btn-danger {
+      background-color: var(--danger-light);
+      color: var(--danger);
+    }
+    .btn-danger:hover {
+      background-color: var(--danger);
+      color: #FFF;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .input-group label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .input-control {
+      width: 100%;
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 11px 14px;
+      font-size: 0.95rem;
+      color: var(--text-main);
+      transition: var(--transition);
+    }
+
+    .input-control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-light);
+      background-color: var(--bg-card);
+    }
+
+    textarea.input-control {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    /* ==========================================
+       STATS & DASHBOARD CARDS
+       ========================================== */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      background-image: var(--card-gradient);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--border-color-hover);
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      flex-shrink: 0;
+    }
+
+    .stat-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .stat-value {
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1.1;
+      margin-top: 2px;
+    }
+
+    .quick-actions-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .action-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 20px;
+      border-radius: var(--radius-lg);
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      font-weight: 600;
+      font-size: 0.92rem;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+    }
+
+    .action-pill:hover {
+      border-color: var(--primary);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+
+    /* ==========================================
+       VOCABULARY LIST & CARDS
+       ========================================== */
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .search-box {
+      flex: 1;
+      min-width: 240px;
+      position: relative;
+    }
+
+    .search-box svg {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+      pointer-events: none;
+    }
+
+    .search-box input {
+      padding-left: 42px;
+    }
+
+    .filter-pills {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .pill-btn {
+      padding: 8px 16px;
+      border-radius: var(--radius-full);
+      font-size: 0.85rem;
+      font-weight: 600;
+      background-color: var(--bg-surface);
+      color: var(--text-muted);
+      border: 1px solid var(--border-color);
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+
+    .pill-btn:hover {
+      background-color: var(--bg-surface-soft);
+      color: var(--text-main);
+    }
+
+    .pill-btn.active {
+      background-color: var(--primary);
+      color: #FFF;
+      border-color: var(--primary);
+      box-shadow: 0 2px 10px var(--primary-glow);
+    }
+
+    .vocab-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+
+    .vocab-card {
+      background-color: var(--bg-card);
+      background-image: var(--card-gradient);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: var(--transition);
+      box-shadow: var(--shadow-sm);
+      position: relative;
+    }
+
+    .vocab-card:hover {
+      border-color: var(--border-color-hover);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .vocab-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .vocab-lang-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-en {
+      background-color: var(--english-light);
+      color: var(--english-accent);
+    }
+
+    .badge-ar {
+      background-color: var(--arabic-light);
+      color: var(--arabic-accent);
+    }
+
+    .vocab-card-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+      z-index: 5;
+    }
+
+    .vocab-action-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      transition: var(--transition);
+      background-color: var(--bg-surface);
+      pointer-events: auto;
+    }
+
+    .vocab-action-btn:hover {
+      color: var(--text-main);
+      background-color: var(--bg-surface-soft);
+    }
+
+    .vocab-action-btn.delete-btn:hover {
+      color: var(--danger);
+      background-color: var(--danger-light);
+    }
+
+    .vocab-word-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .vocab-word {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.01em;
+    }
+
+    .vocab-word.arabic-word {
+      font-family: var(--font-arabic);
+      font-size: 1.7rem;
+      font-weight: 700;
+      direction: rtl;
+      text-align: right;
+    }
+
+    .audio-btn {
+      color: var(--primary);
+      padding: 4px;
+      border-radius: var(--radius-sm);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+
+    .audio-btn:hover {
+      transform: scale(1.15);
+      background-color: var(--primary-light);
+    }
+
+    .vocab-meaning {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+
+    .vocab-example-box {
+      background-color: var(--bg-surface);
+      border-left: 3px solid var(--primary);
+      padding: 10px 12px;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      margin-bottom: 14px;
+      font-size: 0.88rem;
+    }
+
+    .vocab-example-box.arabic-example {
+      border-left: none;
+      border-right: 3px solid var(--arabic-accent);
+      border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+      direction: rtl;
+      text-align: right;
+      font-family: var(--font-arabic);
+      font-size: 1.15rem;
+    }
+
+    .vocab-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-color);
+      font-size: 0.78rem;
+      color: var(--text-dim);
+    }
+
+    .mastery-meter {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .mastery-bar-bg {
+      width: 60px;
+      height: 6px;
+      background-color: var(--bg-surface-soft);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+    }
+
+    .mastery-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--warning) 0%, var(--success) 100%);
+      border-radius: var(--radius-full);
+    }
+
+    /* ==========================================
+       MODALS
+       ========================================== */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      padding: 16px;
+    }
+
+    .modal-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+      transform: scale(0.95);
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .modal-backdrop.open .modal-container {
+      transform: scale(1);
+    }
+
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    .modal-close-btn {
+      color: var(--text-dim);
+      padding: 6px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+
+    .modal-close-btn:hover {
+      color: var(--text-main);
+      background-color: var(--bg-surface);
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      background-color: var(--bg-surface);
+    }
+
+    .lang-selector-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 18px;
+      background-color: var(--bg-surface);
+      padding: 4px;
+      border-radius: var(--radius-md);
+    }
+
+    .lang-toggle-btn {
+      padding: 10px;
+      border-radius: var(--radius-sm);
+      font-weight: 700;
+      font-size: 0.88rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: var(--text-muted);
+      transition: var(--transition);
+    }
+
+    .lang-toggle-btn.active {
+      background-color: var(--bg-card);
+      color: var(--text-main);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* ==========================================
+       QUIZ SYSTEM
+       ========================================== */
+    .quiz-container {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    .quiz-progress-bar {
+      height: 8px;
+      background-color: var(--bg-surface);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .quiz-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary) 0%, #8B5CF6 100%);
+      transition: width 0.3s ease;
+    }
+
+    .quiz-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      padding: 32px;
+      box-shadow: var(--shadow-md);
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .quiz-question-type {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--primary);
+      margin-bottom: 12px;
+    }
+
+    .quiz-prompt-word {
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+      color: var(--text-main);
+    }
+
+    .quiz-prompt-word.arabic-prompt {
+      font-family: var(--font-arabic);
+      font-size: 2.6rem;
+      direction: rtl;
+    }
+
+    .quiz-options-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .quiz-option-btn {
+      width: 100%;
+      padding: 16px 20px;
+      border-radius: var(--radius-lg);
+      background-color: var(--bg-surface);
+      border: 2px solid var(--border-color);
+      font-size: 1rem;
+      font-weight: 600;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: var(--transition);
+      color: var(--text-main);
+    }
+
+    .quiz-option-btn:hover:not(:disabled) {
+      border-color: var(--primary);
+      background-color: var(--bg-surface-soft);
+      transform: translateX(4px);
+    }
+
+    .quiz-option-btn.correct {
+      border-color: var(--success) !important;
+      background-color: var(--success-light) !important;
+      color: var(--success) !important;
+    }
+
+    .quiz-option-btn.wrong {
+      border-color: var(--danger) !important;
+      background-color: var(--danger-light) !important;
+      color: var(--danger) !important;
+    }
+
+    .quiz-option-btn.arabic-opt {
+      font-family: var(--font-arabic);
+      font-size: 1.3rem;
+      direction: rtl;
+      text-align: right;
+    }
+
+    .quiz-feedback-box {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: var(--radius-md);
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .quiz-feedback-box.show {
+      display: flex;
+    }
+
+    /* ==========================================
+       FLASHCARDS SYSTEM
+       ========================================== */
+    .flashcard-wrapper {
+      max-width: 540px;
+      margin: 0 auto;
+      perspective: 1000px;
+    }
+
+    .flashcard-inner {
+      width: 100%;
+      min-height: 320px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: var(--shadow-md);
+      transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      user-select: none;
+    }
+
+    .flashcard-inner.flipped {
+      background: var(--bg-surface);
+      border-color: var(--primary);
+    }
+
+    .flashcard-tag {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+    }
+
+    .flashcard-hint {
+      position: absolute;
+      bottom: 16px;
+      font-size: 0.78rem;
+      color: var(--text-dim);
+    }
+
+    .flashcard-controls {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    /* ==========================================
+       SENTENCE CREATOR & SAVED SENTENCES
+       ========================================== */
+    .sentence-builder-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 900px) {
+      .sentence-builder-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .vocab-selection-list {
+      max-height: 480px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-right: 6px;
+    }
+
+    .vocab-select-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .vocab-select-item:hover {
+      border-color: var(--primary);
+    }
+
+    .vocab-select-item.selected {
+      border-color: var(--primary);
+      background-color: var(--primary-light);
+    }
+
+    .vocab-checkbox {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    .sentence-result-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .saved-sentence-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+      position: relative;
+    }
+
+    .saved-sentence-card:hover {
+      border-color: var(--border-color-hover);
+      box-shadow: var(--shadow-md);
+    }
+
+    /* ==========================================
+       TOAST NOTIFICATIONS
+       ========================================== */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: var(--bg-card);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 12px 20px;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      pointer-events: auto;
+      animation: slideDown 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    .toast-success {
+      border-left: 4px solid var(--success);
+    }
+
+    .toast-info {
+      border-left: 4px solid var(--primary);
+    }
+
+    .toast-danger {
+      border-left: 4px solid var(--danger);
+    }
+
+    /* ==========================================
+       ANIMATIONS
+       ========================================== */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-fade {
+      animation: fadeIn 0.3s ease forwards;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      background: var(--bg-card);
+      border: 1px dashed var(--border-color);
+      border-radius: var(--radius-xl);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .empty-state-icon {
+      font-size: 3rem;
+      color: var(--text-dim);
+    }
+
+    /* ==========================================
+       RESPONSIVENESS (MOBILE / TABLET)
+       ========================================== */
+    @media (max-width: 768px) {
+      .sidebar {
+        display: none;
+      }
+      .main-wrapper {
+        margin-left: 0;
+        padding-bottom: 74px;
+      }
+      .bottom-nav {
+        display: block;
+      }
+      .topbar {
+        padding: 0 16px;
+        height: 60px;
+      }
+      .content-area {
+        padding: 16px;
+      }
+      .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+      .stat-card {
+        padding: 14px;
+        gap: 12px;
+      }
+      .stat-icon {
+        width: 38px;
+        height: 38px;
+        font-size: 1.1rem;
+      }
+      .stat-value {
+        font-size: 1.35rem;
+      }
+      .vocab-grid {
+        grid-template-columns: 1fr;
+      }
+      .toast-container {
+        top: 16px;
+        right: 16px;
+        left: 16px;
+      }
+    }
+  </style>
+</head>
+<body data-theme="dark">
+
+  <!-- Toast Container for Notifications -->
+  <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+  <div class="app-container">
+    
+    <!-- DESKTOP SIDEBAR -->
+    <aside class="sidebar" aria-label="Main Navigation">
+      <div class="brand-section">
+        <div class="brand-logo">
+          <div class="brand-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path>
+              <path d="M6 6h10"></path>
+              <path d="M6 10h10"></path>
+            </svg>
+          </div>
+          <div>
+            <div>BANK VOCAB</div>
+            <div style="font-size: 0.65rem; color: var(--text-dim); font-weight: 500; letter-spacing: 0.05em;">EN 🇬🇧 &bull; AR 🇸🇦 SYSTEM</div>
+          </div>
+        </div>
+      </div>
+
+      <ul class="nav-list">
+        <li class="nav-item">
+          <button class="active" onclick="navigateTo('dashboard')" id="nav-dashboard">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"></rect><rect width="7" height="5" x="14" y="3" rx="1"></rect><rect width="7" height="9" x="14" y="12" rx="1"></rect><rect width="7" height="5" x="3" y="16" rx="1"></rect></svg>
+            Dashboard
+          </button>
+        </li>
+        <li class="nav-item">
+          <button onclick="navigateTo('vocabulary')" id="nav-vocabulary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+            Vocabulary Bank
+            <span class="nav-badge" id="sideBadgeTotal">0</span>
+          </button>
+        </li>
+        <li class="nav-item">
+          <button onclick="navigateTo('quiz')" id="nav-quiz">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><path d="M12 17h.01"></path></svg>
+            Interactive Quiz
+          </button>
+        </li>
+        <li class="nav-item">
+          <button onclick="navigateTo('flashcards')" id="nav-flashcards">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="14" x="3" y="5" rx="2"></rect><path d="M3 10h18"></path></svg>
+            Flashcards
+          </button>
+        </li>
+        <li class="nav-item">
+          <button onclick="navigateTo('review')" id="nav-review">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path><path d="M16 16h5v5"></path></svg>
+            Today's Review
+            <span class="nav-badge" id="sideBadgeReview" style="background: var(--warning-light); color: var(--warning);">0</span>
+          </button>
+        </li>
+        <li class="nav-item">
+          <button onclick="navigateTo('create-sentence')" id="nav-create-sentence">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 2 4 4-10 10H8v-4L18 2Z"></path><path d="m14 6 4 4"></path><path d="M4 22h16"></path></svg>
+            Create Sentence
+          </button>
+        </li>
+        <li class="nav-item">
+          <button onclick="navigateTo('saved-sentences')" id="nav-saved-sentences">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+            Saved Sentences
+          </button>
+        </li>
+        <li class="nav-item">
+          <button onclick="navigateTo('settings')" id="nav-settings">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            Data & Settings
+          </button>
+        </li>
+      </ul>
+
+      <div class="sidebar-footer">
+        <button class="btn btn-secondary btn-sm" onclick="toggleTheme()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <span id="themeIcon">☀️</span> <span id="themeLabel">Light Mode</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT WRAPPER -->
+    <div class="main-wrapper">
+      
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <div class="topbar-title" id="pageTitle">Dashboard</div>
+        <div class="topbar-actions">
+          <button class="btn btn-primary" onclick="openAddModal()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <span>+ Add Vocabulary</span>
+          </button>
+          <button class="btn-icon" onclick="toggleTheme()" title="Toggle Theme" aria-label="Toggle Theme">
+            <span id="topThemeIcon">☀️</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- VIEW CONTAINER -->
+      <main class="content-area">
+        
+        <!-- ==========================================
+             VIEW 1: DASHBOARD
+             ========================================== -->
+        <section id="view-dashboard" class="animate-fade">
+          <div class="dashboard-grid">
+            <div class="stat-card">
+              <div class="stat-icon" style="background: rgba(99, 102, 241, 0.15); color: var(--primary);">📚</div>
+              <div class="stat-info">
+                <span class="stat-label">Total Vocab</span>
+                <span class="stat-value" id="statTotal">0</span>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon" style="background: var(--english-light); color: var(--english-accent);">🇬🇧</div>
+              <div class="stat-info">
+                <span class="stat-label">English</span>
+                <span class="stat-value" id="statEnglish">0</span>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon" style="background: var(--arabic-light); color: var(--arabic-accent);">🇸🇦</div>
+              <div class="stat-info">
+                <span class="stat-label">Arabic</span>
+                <span class="stat-value" id="statArabic">0</span>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon" style="background: var(--warning-light); color: var(--warning);">🧠</div>
+              <div class="stat-info">
+                <span class="stat-label">Review Today</span>
+                <span class="stat-value" id="statReview">0</span>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon" style="background: var(--success-light); color: var(--success);">🔥</div>
+              <div class="stat-info">
+                <span class="stat-label">Mastered</span>
+                <span class="stat-value" id="statMastered">0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Action Buttons -->
+          <div style="margin-bottom: 16px; font-weight: 700; font-size: 1.05rem;">Quick Practice</div>
+          <div class="quick-actions-bar">
+            <button class="action-pill" onclick="navigateTo('quiz')">
+              <span>🎯</span> Start Daily Quiz
+            </button>
+            <button class="action-pill" onclick="navigateTo('flashcards')">
+              <span>🎴</span> Flashcard Session
+            </button>
+            <button class="action-pill" onclick="navigateTo('review')">
+              <span>↻</span> Spaced Review (<span id="quickReviewCount">0</span>)
+            </button>
+            <button class="action-pill" onclick="navigateTo('create-sentence')">
+              <span>✍️</span> Sentence Builder
+            </button>
+          </div>
+
+          <!-- Recent Vocabularies Section -->
+          <div style="display: flex; align-items: center; justify-content: space-between; margin: 28px 0 16px;">
+            <div style="font-weight: 700; font-size: 1.05rem;">Recently Added Vocabulary</div>
+            <button class="btn btn-secondary btn-sm" onclick="navigateTo('vocabulary')">View All &rarr;</button>
+          </div>
+          <div class="vocab-grid" id="dashboardRecentGrid"></div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 2: VOCABULARY BANK
+             ========================================== -->
+        <section id="view-vocabulary" class="animate-fade" style="display: none;">
+          <div class="filter-bar">
+            <div class="search-box">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input type="text" id="vocabSearchInput" class="input-control" placeholder="Search vocabulary or meaning..." oninput="handleSearch(this.value)" />
+            </div>
+
+            <div class="filter-pills">
+              <button class="pill-btn active" onclick="setVocabFilter('all', this)">All</button>
+              <button class="pill-btn" onclick="setVocabFilter('en', this)">🇬🇧 English</button>
+              <button class="pill-btn" onclick="setVocabFilter('ar', this)">🇸🇦 Arabic</button>
+              <button class="pill-btn" onclick="setVocabFilter('review', this)">🧠 Needs Review</button>
+              <button class="pill-btn" onclick="setVocabFilter('mastered', this)">🔥 Mastered</button>
+            </div>
+          </div>
+
+          <div class="vocab-grid" id="vocabCardGrid"></div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 3: INTERACTIVE QUIZ
+             ========================================== -->
+        <section id="view-quiz" class="animate-fade" style="display: none;">
+          <div class="quiz-container">
+            <div class="quiz-progress-bar">
+              <div class="quiz-progress-fill" id="quizProgressBar" style="width: 0%;"></div>
+            </div>
+
+            <div id="quizQuestionBox" class="quiz-card">
+              <div class="quiz-question-type" id="quizTypeLabel">ENGLISH &rarr; INDONESIAN</div>
+              <div class="quiz-prompt-word" id="quizPromptWord">achieve</div>
+              <div style="color: var(--text-muted); font-size: 0.9rem;" id="quizSubText">What is the meaning of this word?</div>
+              
+              <div class="quiz-options-grid" id="quizOptionsContainer"></div>
+
+              <div class="quiz-feedback-box" id="quizFeedbackBox">
+                <div id="quizFeedbackText" style="font-weight: 700;"></div>
+                <button class="btn btn-primary btn-sm" id="quizNextBtn" onclick="nextQuizQuestion()">Next Question &rarr;</button>
+              </div>
+            </div>
+
+            <!-- Quiz Result View -->
+            <div id="quizResultBox" class="quiz-card" style="display: none;">
+              <div style="font-size: 3rem; margin-bottom: 12px;">🎉</div>
+              <h2 style="font-size: 1.6rem; font-weight: 800; margin-bottom: 8px;">Quiz Completed!</h2>
+              <p style="color: var(--text-muted); margin-bottom: 20px;">Hebat! Kemampuan vocabulary kamu terus meningkat.</p>
+              
+              <div style="background: var(--bg-surface); padding: 18px; border-radius: var(--radius-lg); margin-bottom: 24px; display: flex; justify-content: space-around;">
+                <div>
+                  <div style="font-size: 0.8rem; color: var(--text-dim);">SCORE</div>
+                  <div style="font-size: 1.8rem; font-weight: 800; color: var(--primary);" id="quizScoreText">0 / 0</div>
+                </div>
+                <div>
+                  <div style="font-size: 0.8rem; color: var(--text-dim);">ACCURACY</div>
+                  <div style="font-size: 1.8rem; font-weight: 800; color: var(--success);" id="quizAccuracyText">0%</div>
+                </div>
+              </div>
+
+              <div style="display: flex; justify-content: center; gap: 12px;">
+                <button class="btn btn-primary" onclick="initQuiz()">🔄 Play Again</button>
+                <button class="btn btn-secondary" onclick="navigateTo('vocabulary')">Review Words</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 4: FLASHCARDS
+             ========================================== -->
+        <section id="view-flashcards" class="animate-fade" style="display: none;">
+          <div class="flashcard-wrapper">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <span style="font-weight: 700; color: var(--text-muted);" id="flashcardCounter">Card 1 of 10</span>
+              <div class="filter-pills">
+                <button class="pill-btn active" onclick="setFlashcardDeck('all', this)">All</button>
+                <button class="pill-btn" onclick="setFlashcardDeck('en', this)">English</button>
+                <button class="pill-btn" onclick="setFlashcardDeck('ar', this)">Arabic</button>
+              </div>
+            </div>
+
+            <div class="flashcard-inner" id="flashcardElement" onclick="flipFlashcard()">
+              <div class="flashcard-tag">
+                <span class="vocab-lang-badge badge-en" id="flashcardLangBadge">🇬🇧 ENGLISH</span>
+              </div>
+              
+              <div id="flashcardFrontContent">
+                <div class="quiz-prompt-word" id="flashcardWord">achieve</div>
+                <div style="margin-top: 12px;">
+                  <button class="audio-btn" onclick="event.stopPropagation(); playFlashcardAudio();" title="Pronounce">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                  </button>
+                </div>
+              </div>
+
+              <div id="flashcardBackContent" style="display: none;">
+                <div style="font-size: 1.4rem; font-weight: 800; color: var(--primary); margin-bottom: 12px;" id="flashcardMeaning">mencapai / meraih</div>
+                <div class="vocab-example-box" id="flashcardExample" style="max-width: 90%;">"I want to achieve my dream."</div>
+              </div>
+
+              <div class="flashcard-hint" id="flashcardHint">Tap or click card to flip</div>
+            </div>
+
+            <div class="flashcard-controls">
+              <button class="btn btn-secondary btn-danger" onclick="answerFlashcard(false)">
+                <span>↻</span> Need Review
+              </button>
+              <button class="btn btn-primary" style="background: var(--success); box-shadow: 0 4px 14px var(--success-light);" onclick="answerFlashcard(true)">
+                <span>✓</span> I Know This
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 5: TODAY'S REVIEW
+             ========================================== -->
+        <section id="view-review" class="animate-fade" style="display: none;">
+          <div style="max-width: 760px; margin: 0 auto;">
+            <div style="background: var(--bg-card); padding: 24px; border-radius: var(--radius-lg); border: 1px solid var(--border-color); margin-bottom: 24px;">
+              <h2 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 6px;">🧠 Today's Review Queue</h2>
+              <p style="color: var(--text-muted); font-size: 0.9rem;">
+                Vocabulary dengan mastery &lt; 70% atau yang dijadwalkan untuk review hari ini. Tandai kata yang sudah kamu ingat untuk meningkatkan mastery.
+              </p>
+            </div>
+
+            <div id="reviewListContainer" style="display: flex; flex-direction: column; gap: 12px;"></div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 6: CREATE A SENTENCE (SENTENCE BUILDER)
+             ========================================== -->
+        <section id="view-create-sentence" class="animate-fade" style="display: none;">
+          <div class="sentence-builder-grid">
+            
+            <!-- Left: Vocabulary Picker -->
+            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 20px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <div style="font-weight: 700; font-size: 1.05rem;">1. Select Vocabularies</div>
+                <span class="nav-badge" id="selectedVocabCount">0 Selected</span>
+              </div>
+              <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 14px;">
+                Pilih kata yang ingin kamu kombinasikan menjadi kalimat bermakna.
+              </p>
+              
+              <div class="vocab-selection-list" id="sentenceVocabPicker"></div>
+            </div>
+
+            <!-- Right: Sentence Output & Editor -->
+            <div>
+              <div class="sentence-result-card">
+                <div style="font-weight: 700; font-size: 1.05rem;">2. Generate & Practice</div>
+                
+                <button class="btn btn-primary" onclick="generateSmartSentence()">
+                  <span>✨</span> Generate Sentence
+                </button>
+
+                <div class="input-group" style="margin-top: 10px;">
+                  <label>Sentence (English / Arabic RTL):</label>
+                  <textarea id="generatedSentenceInput" class="input-control" style="min-height: 90px;" placeholder="Klik 'Generate Sentence' atau ketik kalimatmu sendiri..."></textarea>
+                </div>
+
+                <div class="input-group">
+                  <label>Indonesian Translation:</label>
+                  <textarea id="generatedTranslationInput" class="input-control" placeholder="Terjemahan bahasa Indonesia..."></textarea>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 6px;">
+                  <button class="btn btn-primary" onclick="saveGeneratedSentence()" style="flex: 1;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    Save Sentence
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 7: SAVED SENTENCES
+             ========================================== -->
+        <section id="view-saved-sentences" class="animate-fade" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div>
+              <h2 style="font-size: 1.3rem; font-weight: 800;">Saved Sentences</h2>
+              <p style="color: var(--text-muted); font-size: 0.88rem;">Koleksi kalimat yang pernah kamu buat dan pelajari.</p>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="navigateTo('create-sentence')">+ Create New</button>
+          </div>
+
+          <div id="savedSentencesList"></div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 8: SETTINGS & BACKUP (EXPORT / IMPORT)
+             ========================================== -->
+        <section id="view-settings" class="animate-fade" style="display: none;">
+          <div style="max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;">
+            
+            <!-- Data Backup Card -->
+            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 24px;">
+              <h3 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 6px;">📦 Backup & Restore (JSON)</h3>
+              <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 20px;">
+                Ekspor seluruh vocabulary, quiz progress, dan kalimat yang tersimpan untuk backup atau dipindahkan ke perangkat lain.
+              </p>
+
+              <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+                <button class="btn btn-primary" onclick="exportDataJSON()">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  Export Data (JSON)
+                </button>
+
+                <label class="btn btn-secondary" style="cursor: pointer;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                  Import Data (JSON)
+                  <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="handleImportFile(event)" />
+                </label>
+              </div>
+            </div>
+
+            <!-- Appearance Settings -->
+            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 24px;">
+              <h3 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 6px;">🎨 Appearance & Preferences</h3>
+              <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 16px;">Sesuaikan tampilan tema aplikasi.</p>
+
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                  <div style="font-weight: 700;">Theme Mode</div>
+                  <div style="font-size: 0.8rem; color: var(--text-muted);">Pilih antara Dark mode atau Light mode</div>
+                </div>
+                <button class="btn btn-secondary" onclick="toggleTheme()">
+                  <span id="settingsThemeIcon">☀️</span> Toggle Theme
+                </button>
+              </div>
+            </div>
+
+            <!-- App Info Card -->
+            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 20px; font-size: 0.85rem; color: var(--text-dim); text-align: center;">
+              <div><strong>Bank Vocabulary</strong> &bull; Version 1.0.0</div>
+              <div style="margin-top: 4px;">English 🇬🇧 & Arabic 🇸🇦 Personal Vocabulary Learning System</div>
+              <div style="margin-top: 8px; color: var(--success); font-weight: 600;">✓ LocalStorage Persistence Active</div>
+            </div>
+
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- MOBILE BOTTOM NAVIGATION -->
+  <nav class="bottom-nav" aria-label="Mobile Navigation">
+    <ul class="bottom-nav-list">
+      <li class="bottom-nav-item">
+        <button class="active" onclick="navigateTo('dashboard')" id="bnav-dashboard">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"></rect><rect width="7" height="5" x="14" y="3" rx="1"></rect><rect width="7" height="9" x="14" y="12" rx="1"></rect><rect width="7" height="5" x="3" y="16" rx="1"></rect></svg>
+          Home
+        </button>
+      </li>
+      <li class="bottom-nav-item">
+        <button onclick="navigateTo('vocabulary')" id="bnav-vocabulary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+          Vocab
+        </button>
+      </li>
+      <li class="bottom-nav-item">
+        <button onclick="navigateTo('quiz')" id="bnav-quiz">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><path d="M12 17h.01"></path></svg>
+          Quiz
+        </button>
+      </li>
+      <li class="bottom-nav-item">
+        <button onclick="navigateTo('flashcards')" id="bnav-flashcards">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="14" x="3" y="5" rx="2"></rect><path d="M3 10h18"></path></svg>
+          Cards
+        </button>
+      </li>
+      <li class="bottom-nav-item">
+        <button onclick="navigateTo('create-sentence')" id="bnav-create-sentence">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 2 4 4-10 10H8v-4L18 2Z"></path><path d="m14 6 4 4"></path><path d="M4 22h16"></path></svg>
+          Sentence
+        </button>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- ==========================================
+       MODAL: ADD / EDIT VOCABULARY
+       ========================================== -->
+  <div class="modal-backdrop" id="vocabModal" onclick="closeModalOnBackdrop(event)">
+    <div class="modal-container" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-header">
+        <div class="modal-title" id="modalTitle">Add Vocabulary</div>
+        <button class="modal-close-btn" onclick="closeVocabModal()" aria-label="Close modal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <input type="hidden" id="editVocabId" value="" />
+
+        <!-- Language Selector -->
+        <div class="lang-selector-group">
+          <button type="button" class="lang-toggle-btn active" id="btnLangEn" onclick="selectFormLanguage('en')">
+            🇬🇧 English
+          </button>
+          <button type="button" class="lang-toggle-btn" id="btnLangAr" onclick="selectFormLanguage('ar')">
+            🇸🇦 Arabic
+          </button>
+        </div>
+
+        <div class="input-group">
+          <label for="formWord">Vocabulary <span style="color: var(--danger);">*</span></label>
+          <input type="text" id="formWord" class="input-control" placeholder="e.g. achieve / مُجْتَهِدٌ" required />
+        </div>
+
+        <div class="input-group">
+          <label for="formMeaning">Meaning (Indonesian) <span style="color: var(--danger);">*</span></label>
+          <input type="text" id="formMeaning" class="input-control" placeholder="e.g. mencapai / rajin bersungguh-sungguh" required />
+        </div>
+
+        <div class="input-group">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <label for="formExample">Example Sentence</label>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="generateFormExample()" style="padding: 2px 8px; font-size: 0.75rem;">
+              ⚡ Generate Example
+            </button>
+          </div>
+          <textarea id="formExample" class="input-control" placeholder="Contoh kalimat penggunaan kata..."></textarea>
+        </div>
+
+        <div class="input-group">
+          <label for="formExampleMeaning">Example Meaning (Indonesian)</label>
+          <input type="text" id="formExampleMeaning" class="input-control" placeholder="Terjemahan contoh kalimat..." />
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeVocabModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="saveVocabularyFromForm()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+          Save Vocabulary
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL: DELETE CONFIRMATION
+       ========================================== -->
+  <div class="modal-backdrop" id="deleteModal" onclick="closeModalOnBackdrop(event)">
+    <div class="modal-container" style="max-width: 400px;">
+      <div class="modal-header">
+        <div class="modal-title">Delete Vocabulary</div>
+        <button class="modal-close-btn" onclick="closeDeleteModal()" aria-label="Close modal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p style="color: var(--text-muted);">Apakah kamu yakin ingin menghapus vocabulary ini? Tindakan ini tidak dapat dibatalkan.</p>
+        <div id="deleteTargetWord" style="margin-top: 12px; font-weight: 700; font-size: 1.1rem; color: var(--danger);"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+        <button class="btn btn-primary btn-danger" id="confirmDeleteBtn" onclick="executeDelete()">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       APPLICATION JAVASCRIPT
+       ========================================== -->
+  <script>
+    /* ==========================================
+       DATA CONSTANTS & STATE MANAGEMENT
+       ========================================== */
+    const DATA_VERSION = 1;
+    const STORAGE_KEY = 'bank_vocab_data';
+
+    let AppState = {
+      version: DATA_VERSION,
+      vocabularies: [],
+      savedSentences: [],
+      quizProgress: {
+        totalAttempts: 0,
+        correctAnswers: 0,
+        wrongAnswers: 0
+      },
+      settings: {
+        theme: 'dark'
+      }
+    };
+
+    let currentActiveView = 'dashboard';
+    let currentFilter = 'all';
+    let currentSearchTerm = '';
+    let itemPendingDeleteId = null;
+    let selectedVocabIdsForSentence = new Set();
+    
+    // Quiz State
+    let quizQuestions = [];
+    let currentQuizIndex = 0;
+    let currentQuizScore = 0;
+    let isQuizAnswered = false;
+
+    // Flashcard State
+    let flashcardDeck = [];
+    let currentFlashcardIndex = 0;
+    let isFlashcardFlipped = false;
+
+    // Initial Starter Data (Seeded ONLY if storage is completely empty)
+    const STARTER_VOCABULARIES = [
+      {
+        id: 'seed_en_1',
+        language: 'en',
+        word: 'achieve',
+        meaning: 'mencapai / meraih',
+        exampleSentence: 'With hard work, you can achieve all your goals.',
+        exampleMeaning: 'Dengan kerja keras, kamu bisa mencapai semua tujuanmu.',
+        dateAdded: new Date().toISOString(),
+        mastery: 80,
+        reviewCount: 3,
+        correctCount: 4,
+        wrongCount: 1,
+        needsReview: false
+      },
+      {
+        id: 'seed_en_2',
+        language: 'en',
+        word: 'consistent',
+        meaning: 'konsisten / tetap teguh',
+        exampleSentence: 'Consistent practice is the key to mastering languages.',
+        exampleMeaning: 'Latihan yang konsisten adalah kunci menguasai bahasa.',
+        dateAdded: new Date().toISOString(),
+        mastery: 60,
+        reviewCount: 1,
+        correctCount: 2,
+        wrongCount: 1,
+        needsReview: true
+      },
+      {
+        id: 'seed_en_3',
+        language: 'en',
+        word: 'opportunity',
+        meaning: 'kesempatan / peluang',
+        exampleSentence: 'Never miss an opportunity to learn something new.',
+        exampleMeaning: 'Jangan pernah lewatkan kesempatan untuk belajar hal baru.',
+        dateAdded: new Date().toISOString(),
+        mastery: 90,
+        reviewCount: 4,
+        correctCount: 5,
+        wrongCount: 0,
+        needsReview: false
+      },
+      {
+        id: 'seed_ar_1',
+        language: 'ar',
+        word: 'مُجْتَهِدٌ',
+        meaning: 'rajin / bersungguh-sungguh',
+        exampleSentence: 'الطَّالِبُ مُجْتَهِدٌ فِي دِرَاسَتِهِ.',
+        exampleMeaning: 'Siswa itu rajin dalam belajarnya.',
+        dateAdded: new Date().toISOString(),
+        mastery: 75,
+        reviewCount: 2,
+        correctCount: 3,
+        wrongCount: 1,
+        needsReview: false
+      },
+      {
+        id: 'seed_ar_2',
+        language: 'ar',
+        word: 'نَجَاحٌ',
+        meaning: 'kesuksesan / keberhasilan',
+        exampleSentence: 'الصَّبْرُ مِفْتَاحُ النَّجَاحِ.',
+        exampleMeaning: 'Kesabaran adalah kunci kesuksesan.',
+        dateAdded: new Date().toISOString(),
+        mastery: 50,
+        reviewCount: 1,
+        correctCount: 1,
+        wrongCount: 1,
+        needsReview: true
+      },
+      {
+        id: 'seed_ar_3',
+        language: 'ar',
+        word: 'حِكْمَةٌ',
+        meaning: 'kebijaksanaan / hikmah',
+        exampleSentence: 'الْحِكْمَةُ خَيْرٌ مِنَ الذَّهَبِ.',
+        exampleMeaning: 'Kebijaksanaan lebih baik daripada emas.',
+        dateAdded: new Date().toISOString(),
+        mastery: 85,
+        reviewCount: 3,
+        correctCount: 4,
+        wrongCount: 0,
+        needsReview: false
+      }
+    ];
+
+    /* ==========================================
+       STORAGE & PERSISTENCE SAFETY
+       ========================================== */
+    function initStorage() {
+      try {
+        const rawMain = localStorage.getItem(STORAGE_KEY);
+        if (rawMain) {
+          const parsed = JSON.parse(rawMain);
+          AppState = { ...AppState, ...parsed };
+        } else {
+          // Check for legacy individual keys for backward compatibility
+          const legacyVocab = localStorage.getItem('vocabularies');
+          const legacySentences = localStorage.getItem('savedSentences');
+          const legacyQuiz = localStorage.getItem('quizProgress');
+          const legacyTheme = localStorage.getItem('theme');
+
+          if (legacyVocab || legacySentences || legacyQuiz) {
+            AppState.vocabularies = legacyVocab ? JSON.parse(legacyVocab) : [];
+            AppState.savedSentences = legacySentences ? JSON.parse(legacySentences) : [];
+            AppState.quizProgress = legacyQuiz ? JSON.parse(legacyQuiz) : AppState.quizProgress;
+            if (legacyTheme) AppState.settings.theme = legacyTheme;
+          } else {
+            AppState.vocabularies = [...STARTER_VOCABULARIES];
+          }
+          saveStorage();
+        }
+
+        if (AppState.settings && AppState.settings.theme) {
+          applyTheme(AppState.settings.theme);
+        }
+      } catch (err) {
+        console.error('Error loading data from localStorage:', err);
+      }
+    }
+
+    function saveStorage() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(AppState));
+        
+        // Redundant legacy sync for extra safety
+        localStorage.setItem('vocabularies', JSON.stringify(AppState.vocabularies));
+        localStorage.setItem('savedSentences', JSON.stringify(AppState.savedSentences));
+        localStorage.setItem('quizProgress', JSON.stringify(AppState.quizProgress));
+      } catch (err) {
+        console.error('Error saving to localStorage:', err);
+        showToast('Gagal menyimpan ke penyimpanan lokal browser.', 'danger');
+      }
+    }
+
+    /* ==========================================
+       THEME CONTROLLER
+       ========================================== */
+    function toggleTheme() {
+      const current = document.body.getAttribute('data-theme') || 'dark';
+      const newTheme = current === 'dark' ? 'light' : 'dark';
+      applyTheme(newTheme);
+      AppState.settings.theme = newTheme;
+      saveStorage();
+      showToast(`Mode ${newTheme === 'dark' ? 'Dark' : 'Light'} diaktifkan`, 'info');
+    }
+
+    function applyTheme(theme) {
+      document.body.setAttribute('data-theme', theme);
+      const isDark = theme === 'dark';
+      const icon = isDark ? '☀️' : '🌙';
+      const label = isDark ? 'Light Mode' : 'Dark Mode';
+
+      const themeIconEl = document.getElementById('themeIcon');
+      const themeLabelEl = document.getElementById('themeLabel');
+      const topThemeIconEl = document.getElementById('topThemeIcon');
+      const settingsThemeIconEl = document.getElementById('settingsThemeIcon');
+
+      if (themeIconEl) themeIconEl.textContent = icon;
+      if (themeLabelEl) themeLabelEl.textContent = label;
+      if (topThemeIconEl) topThemeIconEl.textContent = icon;
+      if (settingsThemeIconEl) settingsThemeIconEl.textContent = icon;
+    }
+
+    /* ==========================================
+       NAVIGATION & ROUTER
+       ========================================== */
+    function navigateTo(viewName) {
+      currentActiveView = viewName;
+      
+      const views = [
+        'dashboard', 'vocabulary', 'quiz', 'flashcards', 
+        'review', 'create-sentence', 'saved-sentences', 'settings'
+      ];
+
+      views.forEach(v => {
+        const el = document.getElementById(`view-${v}`);
+        if (el) el.style.display = 'none';
+        
+        const navBtn = document.getElementById(`nav-${v}`);
+        if (navBtn) navBtn.classList.remove('active');
+
+        const bnavBtn = document.getElementById(`bnav-${v}`);
+        if (bnavBtn) bnavBtn.classList.remove('active');
+      });
+
+      const targetView = document.getElementById(`view-${viewName}`);
+      if (targetView) targetView.style.display = 'block';
+
+      const activeNavBtn = document.getElementById(`nav-${viewName}`);
+      if (activeNavBtn) activeNavBtn.classList.add('active');
+
+      const activeBnavBtn = document.getElementById(`bnav-${viewName}`);
+      if (activeBnavBtn) activeBnavBtn.classList.add('active');
+
+      const titleMap = {
+        'dashboard': 'Dashboard',
+        'vocabulary': 'Vocabulary Bank',
+        'quiz': 'Interactive Quiz',
+        'flashcards': 'Flashcards Practice',
+        'review': "Today's Review",
+        'create-sentence': 'Create a Sentence',
+        'saved-sentences': 'Saved Sentences',
+        'settings': 'Data & Settings'
+      };
+      document.getElementById('pageTitle').textContent = titleMap[viewName] || 'Bank Vocabulary';
+
+      if (viewName === 'dashboard') renderDashboard();
+      if (viewName === 'vocabulary') renderVocabularyList();
+      if (viewName === 'quiz') initQuiz();
+      if (viewName === 'flashcards') initFlashcards();
+      if (viewName === 'review') renderReviewList();
+      if (viewName === 'create-sentence') renderSentenceVocabPicker();
+      if (viewName === 'saved-sentences') renderSavedSentences();
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /* ==========================================
+       TOAST NOTIFICATIONS
+       ========================================== */
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      if (!container) return;
+
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      
+      const icons = {
+        success: '✓',
+        info: 'ℹ',
+        danger: '✕'
+      };
+
+      toast.innerHTML = `
+        <span style="font-weight: bold;">${icons[type] || '•'}</span>
+        <span>${escapeHTML(message)}</span>
+      `;
+
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-10px)';
+        toast.style.transition = 'all 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 3200);
+    }
+
+    /* ==========================================
+       DASHBOARD CONTROLLER
+       ========================================== */
+    function renderDashboard() {
+      const vocabs = AppState.vocabularies || [];
+      const total = vocabs.length;
+      const english = vocabs.filter(v => v.language === 'en').length;
+      const arabic = vocabs.filter(v => v.language === 'ar').length;
+      const reviewWords = vocabs.filter(v => v.mastery < 70 || v.needsReview);
+      const mastered = vocabs.filter(v => v.mastery >= 80).length;
+
+      document.getElementById('statTotal').textContent = total;
+      document.getElementById('statEnglish').textContent = english;
+      document.getElementById('statArabic').textContent = arabic;
+      document.getElementById('statReview').textContent = reviewWords.length;
+      document.getElementById('quickReviewCount').textContent = reviewWords.length;
+      document.getElementById('statMastered').textContent = mastered;
+
+      document.getElementById('sideBadgeTotal').textContent = total;
+      document.getElementById('sideBadgeReview').textContent = reviewWords.length;
+
+      const recentGrid = document.getElementById('dashboardRecentGrid');
+      const recentVocabs = [...vocabs].reverse().slice(0, 4);
+
+      if (recentVocabs.length === 0) {
+        recentGrid.innerHTML = `
+          <div class="empty-state" style="grid-column: 1 / -1;">
+            <div class="empty-state-icon">📚</div>
+            <div style="font-weight: 700; font-size: 1.1rem;">Belum ada vocabulary</div>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Mulai kumpulkan kata baru yang kamu temukan hari ini!</p>
+            <button class="btn btn-primary" onclick="openAddModal()">+ Add Your First Vocabulary</button>
+          </div>
+        `;
+        return;
+      }
+
+      recentGrid.innerHTML = recentVocabs.map(v => createVocabCardHTML(v)).join('');
+    }
+
+    /* ==========================================
+       VOCABULARY CRUD & LIST RENDERING
+       ========================================== */
+    function setVocabFilter(filterType, btn) {
+      currentFilter = filterType;
+      document.querySelectorAll('.filter-pills .pill-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      renderVocabularyList();
+    }
+
+    function handleSearch(term) {
+      currentSearchTerm = term.toLowerCase().trim();
+      renderVocabularyList();
+    }
+
+    function getFilteredVocabularies() {
+      let list = AppState.vocabularies || [];
+
+      if (currentFilter === 'en') {
+        list = list.filter(v => v.language === 'en');
+      } else if (currentFilter === 'ar') {
+        list = list.filter(v => v.language === 'ar');
+      } else if (currentFilter === 'review') {
+        list = list.filter(v => v.mastery < 70 || v.needsReview);
+      } else if (currentFilter === 'mastered') {
+        list = list.filter(v => v.mastery >= 80);
+      }
+
+      if (currentSearchTerm) {
+        list = list.filter(v => 
+          (v.word && v.word.toLowerCase().includes(currentSearchTerm)) ||
+          (v.meaning && v.meaning.toLowerCase().includes(currentSearchTerm)) ||
+          (v.exampleSentence && v.exampleSentence.toLowerCase().includes(currentSearchTerm))
+        );
+      }
+
+      return list;
+    }
+
+    function renderVocabularyList() {
+      const grid = document.getElementById('vocabCardGrid');
+      const filtered = getFilteredVocabularies();
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state" style="grid-column: 1 / -1;">
+            <div class="empty-state-icon">🔍</div>
+            <div style="font-weight: 700; font-size: 1.1rem;">No vocabulary found</div>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Coba ubah kata pencarian atau tambahkan kata baru.</p>
+            <button class="btn btn-primary" onclick="openAddModal()">+ Add Vocabulary</button>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(v => createVocabCardHTML(v)).join('');
+    }
+
+    function createVocabCardHTML(v) {
+      const isArabic = v.language === 'ar';
+      const badgeClass = isArabic ? 'badge-ar' : 'badge-en';
+      const badgeText = isArabic ? '🇸🇦 ARABIC' : '🇬🇧 ENGLISH';
+      const wordClass = isArabic ? 'arabic-word' : '';
+      const exampleClass = isArabic ? 'arabic-example' : '';
+
+      return `
+        <div class="vocab-card" id="card-${v.id}">
+          <div>
+            <div class="vocab-card-header">
+              <span class="vocab-lang-badge ${badgeClass}">${badgeText}</span>
+              <div class="vocab-card-actions">
+                <button class="vocab-action-btn" title="Edit Vocabulary" aria-label="Edit ${escapeHTML(v.word)}" onclick="openEditModal('${v.id}')">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 2 4 4-10 10H8v-4L18 2Z"></path><path d="m14 6 4 4"></path></svg>
+                </button>
+                <button class="vocab-action-btn delete-btn" title="Delete Vocabulary" aria-label="Delete ${escapeHTML(v.word)}" onclick="promptDelete('${v.id}')">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="vocab-word-row">
+              <div class="vocab-word ${wordClass}">${escapeHTML(v.word)}</div>
+              <button class="audio-btn" title="Pronounce word" onclick="speakText('${escapeHTML(v.word)}', '${v.language}')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+              </button>
+            </div>
+
+            <div class="vocab-meaning">${escapeHTML(v.meaning)}</div>
+
+            ${v.exampleSentence ? `
+              <div class="vocab-example-box ${exampleClass}">
+                "${escapeHTML(v.exampleSentence)}"
+                ${v.exampleMeaning ? `<div style="font-size: 0.78rem; color: var(--text-dim); margin-top: 4px; font-family: var(--font-main); direction: ltr; text-align: left;">${escapeHTML(v.exampleMeaning)}</div>` : ''}
+              </div>
+            ` : ''}
+          </div>
+
+          <div class="vocab-card-footer">
+            <div class="mastery-meter" title="Mastery: ${v.mastery || 0}%">
+              <span>Mastery</span>
+              <div class="mastery-bar-bg">
+                <div class="mastery-bar-fill" style="width: ${v.mastery || 0}%;"></div>
+              </div>
+              <span style="font-weight: 700;">${v.mastery || 0}%</span>
+            </div>
+            <div>${formatDate(v.dateAdded)}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    /* ==========================================
+       MODAL CONTROLLERS (ADD / EDIT)
+       ========================================== */
+    let currentFormLang = 'en';
+
+    function openAddModal() {
+      document.getElementById('modalTitle').textContent = '+ Add Vocabulary';
+      document.getElementById('editVocabId').value = '';
+      document.getElementById('formWord').value = '';
+      document.getElementById('formMeaning').value = '';
+      document.getElementById('formExample').value = '';
+      document.getElementById('formExampleMeaning').value = '';
+      
+      selectFormLanguage('en');
+      document.getElementById('vocabModal').classList.add('open');
+      setTimeout(() => document.getElementById('formWord').focus(), 100);
+    }
+
+    function openEditModal(id) {
+      const vocab = AppState.vocabularies.find(v => v.id === id);
+      if (!vocab) return;
+
+      document.getElementById('modalTitle').textContent = 'Edit Vocabulary';
+      document.getElementById('editVocabId').value = vocab.id;
+      document.getElementById('formWord').value = vocab.word || '';
+      document.getElementById('formMeaning').value = vocab.meaning || '';
+      document.getElementById('formExample').value = vocab.exampleSentence || '';
+      document.getElementById('formExampleMeaning').value = vocab.exampleMeaning || '';
+      
+      selectFormLanguage(vocab.language || 'en');
+      document.getElementById('vocabModal').classList.add('open');
+    }
+
+    function closeVocabModal() {
+      document.getElementById('vocabModal').classList.remove('open');
+    }
+
+    function selectFormLanguage(lang) {
+      currentFormLang = lang;
+      const btnEn = document.getElementById('btnLangEn');
+      const btnAr = document.getElementById('btnLangAr');
+      const formWord = document.getElementById('formWord');
+      const formExample = document.getElementById('formExample');
+
+      if (lang === 'en') {
+        btnEn.classList.add('active');
+        btnAr.classList.remove('active');
+        formWord.style.direction = 'ltr';
+        formWord.style.fontFamily = 'var(--font-main)';
+        formExample.style.direction = 'ltr';
+        formExample.style.fontFamily = 'var(--font-main)';
+        formWord.placeholder = 'e.g. achieve, improve, opportunity';
+      } else {
+        btnAr.classList.add('active');
+        btnEn.classList.remove('active');
+        formWord.style.direction = 'rtl';
+        formWord.style.fontFamily = 'var(--font-arabic)';
+        formExample.style.direction = 'rtl';
+        formExample.style.fontFamily = 'var(--font-arabic)';
+        formWord.placeholder = 'مثال: مُجْتَهِدٌ، نَجَاحٌ، حِكْمَةٌ';
+      }
+    }
+
+    function generateFormExample() {
+      const word = document.getElementById('formWord').value.trim();
+      const meaning = document.getElementById('formMeaning').value.trim();
+      if (!word) {
+        showToast('Masukkan kata vocabulary terlebih dahulu!', 'info');
+        return;
+      }
+
+      if (currentFormLang === 'en') {
+        const sentence = `I practice every day to ${word} in my studies and daily life.`;
+        const sentenceMeaning = `Saya berlatih setiap hari untuk ${meaning || word} dalam belajar dan kehidupan sehari-hari.`;
+        document.getElementById('formExample').value = sentence;
+        document.getElementById('formExampleMeaning').value = sentenceMeaning;
+      } else {
+        const sentence = `عَلَيْنَا أَنْ نَسْعَى لِتَحْقِيقِ ${word} فِي حَيَاتِنَا.`;
+        const sentenceMeaning = `Kita harus berusaha untuk mewujudkan ${meaning || word} dalam kehidupan kita.`;
+        document.getElementById('formExample').value = sentence;
+        document.getElementById('formExampleMeaning').value = sentenceMeaning;
+      }
+      showToast('Contoh kalimat berhasil dibuat!', 'success');
+    }
+
+    function saveVocabularyFromForm() {
+      const editId = document.getElementById('editVocabId').value;
+      const word = document.getElementById('formWord').value.trim();
+      const meaning = document.getElementById('formMeaning').value.trim();
+      const exampleSentence = document.getElementById('formExample').value.trim();
+      const exampleMeaning = document.getElementById('formExampleMeaning').value.trim();
+
+      if (!word || !meaning) {
+        showToast('Harap isi kata dan artinya!', 'danger');
+        return;
+      }
+
+      if (editId) {
+        const index = AppState.vocabularies.findIndex(v => v.id === editId);
+        if (index !== -1) {
+          AppState.vocabularies[index] = {
+            ...AppState.vocabularies[index],
+            word,
+            meaning,
+            language: currentFormLang,
+            exampleSentence,
+            exampleMeaning
+          };
+          showToast('Vocabulary berhasil diperbarui!', 'success');
+        }
+      } else {
+        const newVocab = {
+          id: 'vocab_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+          word,
+          meaning,
+          language: currentFormLang,
+          exampleSentence,
+          exampleMeaning,
+          dateAdded: new Date().toISOString(),
+          mastery: 50,
+          reviewCount: 0,
+          correctCount: 0,
+          wrongCount: 0,
+          needsReview: true
+        };
+        AppState.vocabularies.unshift(newVocab);
+        showToast('Vocabulary baru berhasil disimpan!', 'success');
+      }
+
+      saveStorage();
+      closeVocabModal();
+
+      if (currentActiveView === 'dashboard') renderDashboard();
+      if (currentActiveView === 'vocabulary') renderVocabularyList();
+      if (currentActiveView === 'review') renderReviewList();
+      if (currentActiveView === 'create-sentence') renderSentenceVocabPicker();
+    }
+
+    /* ==========================================
+       DELETE LOGIC (ISOLATED & SAFE)
+       ========================================== */
+    function promptDelete(id) {
+      itemPendingDeleteId = id;
+      const vocab = AppState.vocabularies.find(v => v.id === id);
+      if (!vocab) return;
+
+      document.getElementById('deleteTargetWord').textContent = `"${vocab.word}" (${vocab.meaning})`;
+      document.getElementById('deleteModal').classList.add('open');
+    }
+
+    function closeDeleteModal() {
+      itemPendingDeleteId = null;
+      document.getElementById('deleteModal').classList.remove('open');
+    }
+
+    function executeDelete() {
+      if (!itemPendingDeleteId) return;
+
+      AppState.vocabularies = AppState.vocabularies.filter(v => v.id !== itemPendingDeleteId);
+      saveStorage();
+      closeDeleteModal();
+      showToast('Vocabulary berhasil dihapus.', 'info');
+
+      if (currentActiveView === 'dashboard') renderDashboard();
+      if (currentActiveView === 'vocabulary') renderVocabularyList();
+      if (currentActiveView === 'review') renderReviewList();
+      if (currentActiveView === 'create-sentence') renderSentenceVocabPicker();
+    }
+
+    function closeModalOnBackdrop(e) {
+      if (e.target.classList.contains('modal-backdrop')) {
+        e.target.classList.remove('open');
+      }
+    }
+
+    /* ==========================================
+       QUIZ SYSTEM
+       ========================================== */
+    function initQuiz() {
+      const vocabs = AppState.vocabularies || [];
+      const questionBox = document.getElementById('quizQuestionBox');
+      const resultBox = document.getElementById('quizResultBox');
+
+      if (vocabs.length < 2) {
+        questionBox.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🎯</div>
+            <div style="font-weight: 700; font-size: 1.15rem;">Minimal Butuh 2 Vocabulary</div>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Tambahkan beberapa vocabulary terlebih dahulu untuk memulai quiz otomatis.</p>
+            <button class="btn btn-primary" onclick="openAddModal()">+ Add Vocabulary</button>
+          </div>
+        `;
+        resultBox.style.display = 'none';
+        return;
+      }
+
+      quizQuestions = generateQuizQuestions(vocabs, 10);
+      currentQuizIndex = 0;
+      currentQuizScore = 0;
+      isQuizAnswered = false;
+
+      questionBox.style.display = 'block';
+      resultBox.style.display = 'none';
+
+      renderQuizQuestion();
+    }
+
+    function generateQuizQuestions(vocabs, maxCount = 10) {
+      const shuffled = [...vocabs].sort(() => 0.5 - Math.random());
+      const selected = shuffled.slice(0, maxCount);
+
+      return selected.map(target => {
+        const isArabic = target.language === 'ar';
+        const mode = Math.random() > 0.5 ? 'WORD_TO_MEANING' : 'MEANING_TO_WORD';
+        
+        const distractors = vocabs
+          .filter(v => v.id !== target.id)
+          .sort(() => 0.5 - Math.random())
+          .slice(0, 3);
+
+        const isWordToMeaning = mode === 'WORD_TO_MEANING';
+        const correctAnswer = isWordToMeaning ? target.meaning : target.word;
+        
+        let rawOptions = [
+          { text: correctAnswer, isCorrect: true, isArabic: !isWordToMeaning && isArabic }
+        ];
+
+        distractors.forEach(d => {
+          rawOptions.push({
+            text: isWordToMeaning ? d.meaning : d.word,
+            isCorrect: false,
+            isArabic: !isWordToMeaning && d.language === 'ar'
+          });
+        });
+
+        while (rawOptions.length < 4) {
+          rawOptions.push({
+            text: isWordToMeaning ? `Opsi lain ${rawOptions.length}` : `Kata lain ${rawOptions.length}`,
+            isCorrect: false,
+            isArabic: false
+          });
+        }
+
+        const options = rawOptions.sort(() => 0.5 - Math.random());
+
+        return {
+          targetId: target.id,
+          prompt: isWordToMeaning ? target.word : target.meaning,
+          isPromptArabic: isWordToMeaning && isArabic,
+          typeLabel: `${isArabic ? '🇸🇦 ARABIC' : '🇬🇧 ENGLISH'} • ${isWordToMeaning ? 'PILIH ARTI KATA' : 'PILIH VOCABULARY'}`,
+          options,
+          correctAnswer
+        };
+      });
+    }
+
+    function renderQuizQuestion() {
+      if (currentQuizIndex >= quizQuestions.length) {
+        showQuizResults();
+        return;
+      }
+
+      isQuizAnswered = false;
+      const q = quizQuestions[currentQuizIndex];
+      const progressPercent = ((currentQuizIndex) / quizQuestions.length) * 100;
+      document.getElementById('quizProgressBar').style.width = `${progressPercent}%`;
+
+      document.getElementById('quizTypeLabel').textContent = q.typeLabel;
+      const promptEl = document.getElementById('quizPromptWord');
+      promptEl.textContent = q.prompt;
+      promptEl.className = `quiz-prompt-word ${q.isPromptArabic ? 'arabic-prompt' : ''}`;
+
+      const optionsContainer = document.getElementById('quizOptionsContainer');
+      optionsContainer.innerHTML = q.options.map((opt, idx) => `
+        <button class="quiz-option-btn ${opt.isArabic ? 'arabic-opt' : ''}" onclick="selectQuizAnswer(${idx})">
+          <span>${escapeHTML(opt.text)}</span>
+          <span style="font-size: 0.85rem; color: var(--text-dim);">[ ${String.fromCharCode(65 + idx)} ]</span>
+        </button>
+      `).join('');
+
+      document.getElementById('quizFeedbackBox').classList.remove('show');
+    }
+
+    function selectQuizAnswer(selectedIndex) {
+      if (isQuizAnswered) return;
+      isQuizAnswered = true;
+
+      const q = quizQuestions[currentQuizIndex];
+      const selectedOption = q.options[selectedIndex];
+      const optionButtons = document.querySelectorAll('.quiz-option-btn');
+
+      const targetVocab = AppState.vocabularies.find(v => v.id === q.targetId);
+
+      if (selectedOption.isCorrect) {
+        currentQuizScore++;
+        optionButtons[selectedIndex].classList.add('correct');
+        document.getElementById('quizFeedbackText').innerHTML = `
+          <span style="color: var(--success);">✓ Jawaban Benar! Mantap.</span>
+        `;
+
+        if (targetVocab) {
+          targetVocab.correctCount = (targetVocab.correctCount || 0) + 1;
+          targetVocab.mastery = Math.min(100, (targetVocab.mastery || 50) + 10);
+          if (targetVocab.mastery >= 70) targetVocab.needsReview = false;
+        }
+      } else {
+        optionButtons[selectedIndex].classList.add('wrong');
+        q.options.forEach((opt, idx) => {
+          if (opt.isCorrect) optionButtons[idx].classList.add('correct');
+        });
+
+        document.getElementById('quizFeedbackText').innerHTML = `
+          <span style="color: var(--danger);">✕ Kurang Tepat. Jawaban benar: "${escapeHTML(q.correctAnswer)}"</span>
+        `;
+
+        if (targetVocab) {
+          targetVocab.wrongCount = (targetVocab.wrongCount || 0) + 1;
+          targetVocab.mastery = Math.max(10, (targetVocab.mastery || 50) - 10);
+          targetVocab.needsReview = true;
+        }
+      }
+
+      optionButtons.forEach(btn => btn.disabled = true);
+      document.getElementById('quizFeedbackBox').classList.add('show');
+      saveStorage();
+    }
+
+    function nextQuizQuestion() {
+      currentQuizIndex++;
+      renderQuizQuestion();
+    }
+
+    function showQuizResults() {
+      document.getElementById('quizProgressBar').style.width = '100%';
+      document.getElementById('quizQuestionBox').style.display = 'none';
+      const resultBox = document.getElementById('quizResultBox');
+      resultBox.style.display = 'block';
+
+      const total = quizQuestions.length;
+      const accuracy = Math.round((currentQuizScore / total) * 100);
+
+      document.getElementById('quizScoreText').textContent = `${currentQuizScore} / ${total}`;
+      document.getElementById('quizAccuracyText').textContent = `${accuracy}%`;
+
+      AppState.quizProgress.totalAttempts = (AppState.quizProgress.totalAttempts || 0) + total;
+      AppState.quizProgress.correctAnswers = (AppState.quizProgress.correctAnswers || 0) + currentQuizScore;
+      AppState.quizProgress.wrongAnswers = (AppState.quizProgress.wrongAnswers || 0) + (total - currentQuizScore);
+      saveStorage();
+      showToast('Quiz selesai! Progress tersimpan.', 'success');
+    }
+
+    /* ==========================================
+       FLASHCARDS SYSTEM
+       ========================================== */
+    let currentFlashcardFilter = 'all';
+
+    function initFlashcards() {
+      let vocabs = AppState.vocabularies || [];
+      if (currentFlashcardFilter === 'en') vocabs = vocabs.filter(v => v.language === 'en');
+      if (currentFlashcardFilter === 'ar') vocabs = vocabs.filter(v => v.language === 'ar');
+
+      flashcardDeck = [...vocabs].sort(() => 0.5 - Math.random());
+      currentFlashcardIndex = 0;
+      isFlashcardFlipped = false;
+
+      renderCurrentFlashcard();
+    }
+
+    function setFlashcardDeck(filterType, btn) {
+      currentFlashcardFilter = filterType;
+      document.querySelectorAll('#view-flashcards .filter-pills .pill-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      initFlashcards();
+    }
+
+    function renderCurrentFlashcard() {
+      const cardEl = document.getElementById('flashcardElement');
+      const counterEl = document.getElementById('flashcardCounter');
+
+      if (flashcardDeck.length === 0) {
+        cardEl.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🎴</div>
+            <div style="font-weight: 700; font-size: 1.1rem;">Belum ada kartu flashcard</div>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Tambahkan vocabulary untuk memulai latihan flashcards.</p>
+          </div>
+        `;
+        counterEl.textContent = '0 / 0';
+        return;
+      }
+
+      isFlashcardFlipped = false;
+      cardEl.classList.remove('flipped');
+      document.getElementById('flashcardFrontContent').style.display = 'block';
+      document.getElementById('flashcardBackContent').style.display = 'none';
+
+      const v = flashcardDeck[currentFlashcardIndex];
+      const isArabic = v.language === 'ar';
+
+      counterEl.textContent = `Card ${currentFlashcardIndex + 1} of ${flashcardDeck.length}`;
+      
+      const badge = document.getElementById('flashcardLangBadge');
+      badge.className = `vocab-lang-badge ${isArabic ? 'badge-ar' : 'badge-en'}`;
+      badge.textContent = isArabic ? '🇸🇦 ARABIC' : '🇬🇧 ENGLISH';
+
+      const wordEl = document.getElementById('flashcardWord');
+      wordEl.textContent = v.word;
+      wordEl.className = `quiz-prompt-word ${isArabic ? 'arabic-prompt' : ''}`;
+
+      document.getElementById('flashcardMeaning').textContent = v.meaning;
+      
+      const exEl = document.getElementById('flashcardExample');
+      if (v.exampleSentence) {
+        exEl.style.display = 'block';
+        exEl.textContent = `"${v.exampleSentence}"`;
+        if (isArabic) {
+          exEl.style.direction = 'rtl';
+          exEl.style.fontFamily = 'var(--font-arabic)';
+        } else {
+          exEl.style.direction = 'ltr';
+          exEl.style.fontFamily = 'var(--font-main)';
+        }
+      } else {
+        exEl.style.display = 'none';
+      }
+    }
+
+    function flipFlashcard() {
+      if (flashcardDeck.length === 0) return;
+      isFlashcardFlipped = !isFlashcardFlipped;
+      const cardEl = document.getElementById('flashcardElement');
+
+      if (isFlashcardFlipped) {
+        cardEl.classList.add('flipped');
+        document.getElementById('flashcardFrontContent').style.display = 'none';
+        document.getElementById('flashcardBackContent').style.display = 'block';
+      } else {
+        cardEl.classList.remove('flipped');
+        document.getElementById('flashcardFrontContent').style.display = 'block';
+        document.getElementById('flashcardBackContent').style.display = 'none';
+      }
+    }
+
+    function playFlashcardAudio() {
+      if (flashcardDeck.length === 0) return;
+      const v = flashcardDeck[currentFlashcardIndex];
+      speakText(v.word, v.language);
+    }
+
+    function answerFlashcard(isKnown) {
+      if (flashcardDeck.length === 0) return;
+      const currentVocab = flashcardDeck[currentFlashcardIndex];
+      const vocabInState = AppState.vocabularies.find(v => v.id === currentVocab.id);
+
+      if (vocabInState) {
+        if (isKnown) {
+          vocabInState.mastery = Math.min(100, (vocabInState.mastery || 50) + 15);
+          if (vocabInState.mastery >= 70) vocabInState.needsReview = false;
+        } else {
+          vocabInState.mastery = Math.max(10, (vocabInState.mastery || 50) - 10);
+          vocabInState.needsReview = true;
+        }
+        saveStorage();
+      }
+
+      currentFlashcardIndex = (currentFlashcardIndex + 1) % flashcardDeck.length;
+      renderCurrentFlashcard();
+    }
+
+    /* ==========================================
+       TODAY'S REVIEW QUEUE
+       ========================================== */
+    function renderReviewList() {
+      const container = document.getElementById('reviewListContainer');
+      const reviewList = AppState.vocabularies.filter(v => v.mastery < 70 || v.needsReview);
+
+      if (reviewList.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🌟</div>
+            <div style="font-weight: 700; font-size: 1.2rem;">You're all caught up!</div>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Semua vocabulary sudah kamu kuasai dengan baik hari ini.</p>
+            <button class="btn btn-secondary" onclick="navigateTo('vocabulary')">Lihat Semua Kata</button>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = reviewList.map(v => {
+        const isArabic = v.language === 'ar';
+        return `
+          <div class="stat-card" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+            <div style="display: flex; align-items: center; gap: 14px;">
+              <span style="font-size: 1.4rem;">${isArabic ? '🇸🇦' : '🇬🇧'}</span>
+              <div>
+                <div style="font-weight: 800; font-size: 1.15rem; ${isArabic ? 'font-family: var(--font-arabic); direction: rtl;' : ''}">${escapeHTML(v.word)}</div>
+                <div style="color: var(--text-muted); font-size: 0.9rem;">${escapeHTML(v.meaning)}</div>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <button class="btn btn-secondary btn-sm" onclick="markReviewItem('${v.id}', false)">
+                ↻ Review Again
+              </button>
+              <button class="btn btn-primary btn-sm" style="background: var(--success);" onclick="markReviewItem('${v.id}', true)">
+                ✓ Remembered
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function markReviewItem(id, remembered) {
+      const vocab = AppState.vocabularies.find(v => v.id === id);
+      if (!vocab) return;
+
+      if (remembered) {
+        vocab.mastery = Math.min(100, (vocab.mastery || 50) + 20);
+        if (vocab.mastery >= 70) vocab.needsReview = false;
+        showToast(`"${vocab.word}" ditandai sudah ingat (+mastery)`, 'success');
+      } else {
+        vocab.mastery = Math.max(10, (vocab.mastery || 50) - 5);
+        vocab.needsReview = true;
+        showToast(`"${vocab.word}" dijadwalkan untuk review ulang`, 'info');
+      }
+
+      saveStorage();
+      renderReviewList();
+      renderDashboard();
+    }
+
+    /* ==========================================
+       SENTENCE BUILDER ("CREATE A SENTENCE")
+       ========================================== */
+    function renderSentenceVocabPicker() {
+      const container = document.getElementById('sentenceVocabPicker');
+      const vocabs = AppState.vocabularies || [];
+
+      if (vocabs.length === 0) {
+        container.innerHTML = `<div style="color: var(--text-dim); text-align: center; padding: 20px;">Belum ada vocabulary.</div>`;
+        return;
+      }
+
+      container.innerHTML = vocabs.map(v => {
+        const isSelected = selectedVocabIdsForSentence.has(v.id);
+        const isArabic = v.language === 'ar';
+        return `
+          <div class="vocab-select-item ${isSelected ? 'selected' : ''}" onclick="toggleSentenceVocabSelect('${v.id}')">
+            <input type="checkbox" class="vocab-checkbox" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleSentenceVocabSelect('${v.id}')" />
+            <div style="flex: 1; display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-weight: 700; ${isArabic ? 'font-family: var(--font-arabic);' : ''}">${escapeHTML(v.word)}</span>
+              <span style="font-size: 0.85rem; color: var(--text-muted);">${escapeHTML(v.meaning)}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('selectedVocabCount').textContent = `${selectedVocabIdsForSentence.size} Selected`;
+    }
+
+    function toggleSentenceVocabSelect(id) {
+      if (selectedVocabIdsForSentence.has(id)) {
+        selectedVocabIdsForSentence.delete(id);
+      } else {
+        selectedVocabIdsForSentence.add(id);
+      }
+      renderSentenceVocabPicker();
+    }
+
+    function generateSmartSentence() {
+      if (selectedVocabIdsForSentence.size === 0) {
+        showToast('Pilih minimal 1 vocabulary di sebelah kiri terlebih dahulu!', 'info');
+        return;
+      }
+
+      const selectedList = AppState.vocabularies.filter(v => selectedVocabIdsForSentence.has(v.id));
+      const hasArabic = selectedList.some(v => v.language === 'ar');
+      const words = selectedList.map(v => v.word);
+      const meanings = selectedList.map(v => v.meaning);
+
+      let sentence = '';
+      let translation = '';
+
+      if (hasArabic) {
+        const joinedWords = words.join(' وَ ');
+        sentence = `أَسْعَى دَائِمًا لِتَحْقِيقِ ${joinedWords} فِي حَيَاتِي الْيَوْمِيَّةِ.`;
+        translation = `Saya selalu berusaha untuk mewujudkan ${meanings.join(' dan ')} dalam kehidupan sehari-hari saya.`;
+        
+        document.getElementById('generatedSentenceInput').style.direction = 'rtl';
+        document.getElementById('generatedSentenceInput').style.fontFamily = 'var(--font-arabic)';
+        document.getElementById('generatedSentenceInput').style.fontSize = '1.3rem';
+      } else {
+        if (words.length === 1) {
+          sentence = `I am determined to ${words[0]} my biggest goals by working hard every single day.`;
+          translation = `Saya bertekad untuk ${meanings[0]} tujuan terbesar saya dengan bekerja keras setiap hari.`;
+        } else if (words.length === 2) {
+          sentence = `To ${words[0]} real success, it is important to stay ${words[1]} throughout the journey.`;
+          translation = `Untuk ${meanings[0]} kesuksesan sejati, penting untuk tetap ${meanings[1]} sepanjang perjalanan.`;
+        } else {
+          sentence = `I want to ${words[0]} my dreams by staying ${words[1]} and embracing every ${words.slice(2).join(', ')}.`;
+          translation = `Saya ingin ${meanings[0]} impian saya dengan tetap ${meanings[1]} dan memanfaatkan setiap ${meanings.slice(2).join(', ')}.`;
+        }
+
+        document.getElementById('generatedSentenceInput').style.direction = 'ltr';
+        document.getElementById('generatedSentenceInput').style.fontFamily = 'var(--font-main)';
+        document.getElementById('generatedSentenceInput').style.fontSize = '1rem';
+      }
+
+      document.getElementById('generatedSentenceInput').value = sentence;
+      document.getElementById('generatedTranslationInput').value = translation;
+      showToast('Kalimat berhasil dirangkai!', 'success');
+    }
+
+    function saveGeneratedSentence() {
+      const sentence = document.getElementById('generatedSentenceInput').value.trim();
+      const translation = document.getElementById('generatedTranslationInput').value.trim();
+
+      if (!sentence) {
+        showToast('Kalimat belum dibuat atau masih kosong!', 'danger');
+        return;
+      }
+
+      const selectedList = AppState.vocabularies.filter(v => selectedVocabIdsForSentence.has(v.id));
+      const hasArabic = selectedList.some(v => v.language === 'ar');
+
+      const newSaved = {
+        id: 'sent_' + Date.now(),
+        sentence,
+        translation,
+        language: hasArabic ? 'ar' : 'en',
+        vocabWords: selectedList.map(v => v.word),
+        dateCreated: new Date().toISOString()
+      };
+
+      AppState.savedSentences = AppState.savedSentences || [];
+      AppState.savedSentences.unshift(newSaved);
+      saveStorage();
+
+      showToast('Kalimat berhasil disimpan ke Saved Sentences!', 'success');
+      document.getElementById('generatedSentenceInput').value = '';
+      document.getElementById('generatedTranslationInput').value = '';
+      selectedVocabIdsForSentence.clear();
+      renderSentenceVocabPicker();
+    }
+
+    /* ==========================================
+       SAVED SENTENCES VIEW
+       ========================================== */
+    function renderSavedSentences() {
+      const container = document.getElementById('savedSentencesList');
+      const sentences = AppState.savedSentences || [];
+
+      if (sentences.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">✍️</div>
+            <div style="font-weight: 700; font-size: 1.15rem;">No saved sentences yet</div>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Gunakan menu "Create Sentence" untuk merangkai dan menyimpan kalimat baru.</p>
+            <button class="btn btn-primary" onclick="navigateTo('create-sentence')">+ Create Sentence</button>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = sentences.map(s => {
+        const isArabic = s.language === 'ar';
+        return `
+          <div class="saved-sentence-card" id="sent-${s.id}">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px;">
+              <span class="vocab-lang-badge ${isArabic ? 'badge-ar' : 'badge-en'}">
+                ${isArabic ? '🇸🇦 ARABIC SENTENCE' : '🇬🇧 ENGLISH SENTENCE'}
+              </span>
+              <button class="vocab-action-btn delete-btn" title="Delete Sentence" onclick="deleteSavedSentence('${s.id}')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+
+            <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px; ${isArabic ? 'font-family: var(--font-arabic); direction: rtl; text-align: right;' : ''}">
+              "${escapeHTML(s.sentence)}"
+            </div>
+
+            ${s.translation ? `
+              <div style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 12px;">
+                ${escapeHTML(s.translation)}
+              </div>
+            ` : ''}
+
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; border-top: 1px solid var(--border-color); padding-top: 10px; font-size: 0.78rem; color: var(--text-dim);">
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <span>Vocab used:</span>
+                ${(s.vocabWords || []).map(w => `<span class="pill-btn btn-sm" style="padding: 2px 8px; font-size: 0.75rem;">${escapeHTML(w)}</span>`).join('')}
+              </div>
+              <div>${formatDate(s.dateCreated)}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function deleteSavedSentence(id) {
+      AppState.savedSentences = AppState.savedSentences.filter(s => s.id !== id);
+      saveStorage();
+      renderSavedSentences();
+      showToast('Kalimat berhasil dihapus.', 'info');
+    }
+
+    /* ==========================================
+       EXPORT & IMPORT (JSON BACKUP)
+       ========================================== */
+    function exportDataJSON() {
+      try {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(AppState, null, 2));
+        const downloadAnchor = document.createElement('a');
+        const fileName = `bank_vocabulary_backup_${new Date().toISOString().split('T')[0]}.json`;
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", fileName);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+        showToast('Data berhasil diekspor ke file JSON!', 'success');
+      } catch (err) {
+        showToast('Gagal mengekspor data: ' + err.message, 'danger');
+      }
+    }
+
+    function handleImportFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (!imported || (!imported.vocabularies && !Array.isArray(imported))) {
+            throw new Error('Format file JSON tidak valid.');
+          }
+
+          const incomingVocabs = imported.vocabularies || (Array.isArray(imported) ? imported : []);
+          const incomingSentences = imported.savedSentences || [];
+
+          const existingMap = new Map();
+          AppState.vocabularies.forEach(v => existingMap.set(`${v.language}_${v.word.toLowerCase()}`, v));
+
+          incomingVocabs.forEach(v => {
+            const key = `${v.language}_${v.word.toLowerCase()}`;
+            if (!existingMap.has(key)) {
+              AppState.vocabularies.push({
+                ...v,
+                id: v.id || ('vocab_' + Date.now() + Math.random().toString(36).substr(2, 4))
+              });
+            }
+          });
+
+          const existingSentenceIds = new Set(AppState.savedSentences.map(s => s.id));
+          incomingSentences.forEach(s => {
+            if (!existingSentenceIds.has(s.id)) {
+              AppState.savedSentences.push(s);
+            }
+          });
+
+          saveStorage();
+          renderDashboard();
+          showToast('Data berhasil di-import dan digabungkan (Merge)!', 'success');
+        } catch (err) {
+          showToast('Error saat membaca file JSON: ' + err.message, 'danger');
+        }
+        event.target.value = '';
+      };
+      reader.readAsText(file);
+    }
+
+    /* ==========================================
+       SPEECH SYNTHESIS & UTILITIES
+       ========================================== */
+    function speakText(text, lang) {
+      if (!('speechSynthesis' in window)) {
+        showToast('Fitur suara tidak didukung oleh browser ini.', 'info');
+        return;
+      }
+
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = lang === 'ar' ? 'ar-SA' : 'en-US';
+      utterance.rate = 0.9;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function escapeHTML(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      try {
+        const d = new Date(dateStr);
+        return d.toLocaleDateString('id-ID', { month: 'short', day: 'numeric', year: 'numeric' });
+      } catch (e) {
+        return '';
+      }
+    }
+
+    // Keyboard Shortcuts (Esc closes modal)
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeVocabModal();
+        closeDeleteModal();
+      }
+    });
+
+    // Initialize application on DOM ready
+    document.addEventListener('DOMContentLoaded', () => {
+      initStorage();
+      renderDashboard();
+    });
+  </script>
+</body>
+</html>
+```
